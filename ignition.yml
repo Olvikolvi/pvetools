@@ -1,0 +1,242 @@
+# This config is meant to be consumed by the config transpiler, which will
+# generate the corresponding Ignition config. Do not pass this config directly
+# to instances of Container Linux.
+
+passwd:
+  users:
+    - name: core
+      password_hash: $1$sTHBGc9U$NjO6jfDX/kJnweYVRV0/i0
+      ssh_authorized_keys:
+        - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDLKiyb51xIJJ9gchM+mZxQqgm3GaWKjv7V9zHuBMQfltex9gRD8tvhGzBqlY/ZkhsywRS0kAfDYHO+jKQPmMUk/NF/1XiiW5302caEmvR5erVhHUJAl/4ZCLrpdM/EyTlAP5AOn0eF4hQAiFEgIZYfrXakSeRNKvyxh9DiMYPqSGKj9XX8vY13tWS5hrVChF9YHqT4hanuLzSa/nHE6FmNa/TAYznaYn/jONWExxvJLwb3cpP48dA5DfKjop5zbAaX9YLax+/bWRuiqt6MP4Rx+olTX+YA8ICyOvZTVSWaUspv5I5/JydxP8RunwPryR2HtNkpp8soT1GM5nvuGi0x6XdO6PF+MmLs4kL/z0OorOSHOCSK3yauU3lfaGsY+hdTsHmC5Syb61ftnGNsJSmRHVGbod0QmUHPOUTYMy+0AjeS6PvNkqt4cLxHzWdi0lyqIXPVM1wk0VqDOCxquQuBJFEBTAMSK9nVJaLG6Cv4XHAJd5M4i76N2XZdLDIM3nNa7OwTKbbRSGuRV/5SZYGbk3rPmpz/aLZ88f5JDzLnc3UL8s6BIXr6Qcpi31wbf3QOTYBYKCFNzWiziGRkTku/fwgaqmg0PkTtuT+WMDacGajMz1ayVCdCnJlk1m1SgUdkfWrCD/w7tDW5EOeVYpaloXVJl5FgT3+2JzV1CZe2Ow== mikko.lampikoski
+
+networkd:
+  units:
+    - name: 00-eth0.network
+      contents: |
+        [Match]
+        Name=eth0
+
+        [Network]
+        DNS=8.8.4.4
+        Address=5.83.57.245/24
+        Gateway=5.83.57.1
+
+    - name: 00-eth1.network
+      contents: |
+        [Match]
+        Name=eth1
+
+        [Network]
+        Address=10.1.10.103/24
+
+etcd:
+  # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
+  # specify the initial size of your cluster with ?size=X
+  # discovery: https://discovery.etcd.io/946625dc111eb41c2eee47861389f65e
+  name:                        my-etcd-3
+  advertise_client_urls:       http://10.1.10.103:2379
+  initial_advertise_peer_urls: http://10.1.10.103:2380
+  listen_client_urls:          http://10.1.10.103:2379
+  listen_peer_urls:            http://10.1.10.103:2380
+  initial_cluster:             my-etcd-1=http://10.1.10.101:2380,my-etcd-2=http://10.1.10.102:2380,my-etcd-3=http://10.1.10.103:2380
+  initial_cluster_token:       946625dc111eb41c2eee47861389f65e
+#  initial_cluster_state:       new
+  initial_cluster_state:       existing
+
+
+storage:
+  directories:
+    - filesystem: "root"
+      path:       "/opt/bin"
+      mode:       0755
+    - filesystem: "root"
+      path:       "/etc/ceph"
+      mode:       0755
+  files:
+    - filesystem: "root"
+      path:       "/etc/hostname"
+      mode:       0644
+      contents:
+        inline:   coreos-3
+
+    - path:       /etc/ceph/ceph.conf
+      filesystem: "root"
+      mode:       0644
+      contents:
+        local:    /etc/ceph/ceph.conf
+
+    - path:       /etc/ceph/ceph.client.admin.keyring
+      filesystem: "root"
+      mode:       0644
+      contents:
+        local:    /etc/pve/priv/ceph.client.admin.keyring
+
+    - path:       "/home/core/.rexray/etc/config.yml"
+      filesystem: root
+      user:
+        name: core
+      group:
+        name: core
+      mode:       0644
+      contents:
+       inline: |
+         libstorage:
+           service: rbd
+           integration:     
+             volume:
+               operations:
+                 create:
+                   default:
+                     size: 10G
+         rbd:
+           defaultPool: docker
+
+    - path:       /etc/modules-load.d/rbd.conf
+      filesystem: root
+      mode:       0644
+      contents:
+        inline: rbd
+    - path:       "/opt/bin/ceph"
+      filesystem: root
+      mode:       0755
+      contents:
+        inline:   /usr/bin/docker run --rm --privileged=true -v /etc/ceph:/etc/ceph -v /dev:/dev ceph/base ceph "$@"
+    - path:       /opt/bin/ceph-base
+      filesystem: root
+      mode:       0755
+      contents:
+        inline:   /usr/bin/docker run --rm --privileged=true -v /etc/ceph:/etc/ceph -v /dev:/dev ceph/base ceph-base "$@"
+    - path:       /opt/bin/ceph-common
+      filesystem: root
+      mode:       0755
+      contents:
+        inline:   /usr/bin/docker run --rm --privileged=true -v /etc/ceph:/etc/ceph -v /dev:/dev ceph/base ceph-common "$@"
+    - path:       /opt/bin/ceph-conf
+      filesystem: root
+      mode:       0755
+      contents:
+        inline:   /usr/bin/docker run --rm --privileged=true -v /etc/ceph:/etc/ceph -v /dev:/dev ceph/base ceph-conf "$@"
+    - path:       /opt/bin/rbd
+      filesystem: root
+      mode:       0755
+      contents:
+        inline:   /usr/bin/docker run --rm --privileged=true -v /etc/ceph:/etc/ceph -v /dev:/dev ceph/rbd "$@"
+
+    - path: /etc/docker/ca.pem
+      filesystem: root
+      mode: 0644
+      contents:
+        inline: |
+          -----BEGIN CERTIFICATE-----
+          MIIB9TCCAZugAwIBAgIUQS1uURJIMpzOOoKFdH9olC32EeUwCgYIKoZIzj0EAwIw
+          VzELMAkGA1UEBhMCRkkxDjAMBgNVBAgTBVR1cmt1MQswCQYDVQQHEwJGSTENMAsG
+          A1UEChMEZG9vcDEcMBoGA1UEAxMTZG9vcCBkb2NrZXIgbmV0d29yazAeFw0xODAx
+          MzAwOTE5MDBaFw0yMzAxMjkwOTE5MDBaMFcxCzAJBgNVBAYTAkZJMQ4wDAYDVQQI
+          EwVUdXJrdTELMAkGA1UEBxMCRkkxDTALBgNVBAoTBGRvb3AxHDAaBgNVBAMTE2Rv
+          b3AgZG9ja2VyIG5ldHdvcmswWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATGaly6
+          kseU0FIovY7jLVDflVBYm5y2LfUE/3Y8mM+dz7ugtPxzWQvYS3A/iM4avNkkIwYq
+          CwXipI5mwJiK8ce8o0UwQzAOBgNVHQ8BAf8EBAMCAQYwEgYDVR0TAQH/BAgwBgEB
+          /wIBAjAdBgNVHQ4EFgQUJJNCzu3EqfhD3bGf9UvuYNXYTUswCgYIKoZIzj0EAwID
+          SAAwRQIgOjyzrsIWLA6f67XRNlSYAvGjNgTzdxMoFSNZbDKd9goCIQDu5y5ynn0E
+          6vP0Gi36cfY1AZY+ye1h2VvhLOjb67qQ6w==
+          -----END CERTIFICATE-----
+    - path: /etc/docker/server.pem
+      filesystem: root
+      mode: 0644
+      contents:
+        inline: |
+          -----BEGIN CERTIFICATE-----
+          MIICPjCCAeOgAwIBAgIUKMFVqIryvdAim8mKXNIyeawTmRcwCgYIKoZIzj0EAwIw
+          VzELMAkGA1UEBhMCRkkxDjAMBgNVBAgTBVR1cmt1MQswCQYDVQQHEwJGSTENMAsG
+          A1UEChMEZG9vcDEcMBoGA1UEAxMTZG9vcCBkb2NrZXIgbmV0d29yazAeFw0xODAx
+          MzAwOTIyMDBaFw0yMzAxMjkwOTIyMDBaMD4xCzAJBgNVBAYTAkZJMRAwDgYDVQQI
+          EwdGaW5sYW5kMQswCQYDVQQHEwJGSTEQMA4GA1UEAxMHY29yZW9zMTBZMBMGByqG
+          SM49AgEGCCqGSM49AwEHA0IABKCLWguTNG135LTibyfueSQLikplWGOYwKXxZyrp
+          FGQFobL2eWTKNyNgwKcK5MM3Wnl/uzNrCs42pKd4c5cC5KmjgaUwgaIwDgYDVR0P
+          AQH/BAQDAgWgMBMGA1UdJQQMMAoGCCsGAQUFBwMBMAwGA1UdEwEB/wQCMAAwHQYD
+          VR0OBBYEFCkjqp7fdc1aPKhBI3q73IN7J056MB8GA1UdIwQYMBaAFCSTQs7txKn4
+          Q92xn/VL7mDV2E1LMC0GA1UdEQQmMCSCB2NvcmVvczGCDWNvcmVvczEubG9jYWyH
+          BAVTOfGHBAoBCmUwCgYIKoZIzj0EAwIDSQAwRgIhALtvkQMHBCxke1Tv7Fl4fI/a
+          QKJh5Zw6Dq0UDIK2Ge4nAiEAm/Eg/fCP3uV4YRqo4s/AzTBB3URg1bGdQKodRAnH
+          azY=
+          -----END CERTIFICATE-----
+    - path: /etc/docker/server-key.pem
+      filesystem: root
+      mode: 0644
+      contents:
+        inline: |
+          -----BEGIN EC PRIVATE KEY-----
+          MHcCAQEEICdra0tPWyRNw5UDKGnlT6YMrKiAsOXlrjuMYEcX3zPdoAoGCCqGSM49
+          AwEHoUQDQgAEoItaC5M0bXfktOJvJ+55JAuKSmVYY5jApfFnKukUZAWhsvZ5ZMo3
+          I2DApwrkwzdaeX+7M2sKzjakp3hzlwLkqQ==
+          -----END EC PRIVATE KEY-----
+
+systemd:
+  units:
+    - name: docker-tls-tcp.socket
+      enable: true
+      contents: |
+        [Unit]
+        Description=Docker Secured Socket for the API
+
+        [Socket]
+        ListenStream=2376
+        BindIPv6Only=both
+        Service=docker.service
+
+        [Install]
+        WantedBy=sockets.target
+
+    # install docker-compose
+    - name: install-docker-compose.service
+      enable: true
+      contents: |
+        [Unit]
+        Description=Install docker-compose
+        ConditionPathExists=!/opt/bin/docker-compose
+        After=network-online.target
+        Requires=network-online.target
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/bin/mkdir -p /opt/bin/
+        ExecStart=/usr/bin/curl -o /opt/bin/docker-compose -sL "https://github.com/docker/compose/releases/download/1.9.0/docker-compose-linux-x86_64"
+        ExecStart=/usr/bin/chmod +x /opt/bin/docker-compose
+
+#EI TARVITA
+#    - name: install-rexray.service
+#      enable: true
+#      contents: |
+#        [Unit]
+#        Description=Install rexray
+#        ConditionPathExists=!/opt/bin/rexray
+#        After=network-online.target
+#        Requires=network-online.target
+#
+#        [Service]
+#        Type=oneshot
+#        RemainAfterExit=yes
+#        ExecStart=/usr/bin/curl -sSL https://rexray.io/install | /usr/bin/sh -s -- stable
+
+    - name: install-rexray-docker-plugin.service
+      enable: true
+      contents: |
+        [Unit]
+        Description=Install docker-plugin
+        After=network-online.target
+        Requires=network-online.target
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/bin/docker plugin install rexray/rbd:latest RBD_DEFAULTPOOL="docker" RBD_CEPHARGS="--id admin" --grant-all-permissions
+        ExecStart=/usr/bin/docker plugin enable rexray/rbd:latest
+
+docker:
+  flags:
+    - --tlsverify
+    - --tlscacert=/etc/docker/ca.pem
+    - --tlscert=/etc/docker/server.pem
+    - --tlskey=/etc/docker/server-key.pem
+
