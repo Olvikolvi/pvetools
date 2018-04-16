@@ -21,6 +21,7 @@ if [ ! -f /etc/pve/qemu-server/$VMID.conf ]; then
 fi
 
 DISKS=`rbd -p pve ls|grep "vm-$VMID-disk"`
+LATEST=''
 for DISK in $DISKS
 do
    # excl on vain kun virtuaalikone on käynnissä?
