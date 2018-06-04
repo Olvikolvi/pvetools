@@ -2,10 +2,15 @@
 downTime=0
 lastAlert=0
 lastAccessTime=$(date +"%s")
+if [ -n "$1" ]
+then
+  IP2PING=$1
+fi
 if [ ! $IP2PING ]; then
   IP2PING='8.8.8.8'
 fi
 
+echo "Starting to ping $IP2PING every 1 sec.. " $(date)
 #counter=0
 
 while [ true ]; do

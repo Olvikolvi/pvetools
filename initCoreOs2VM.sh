@@ -11,6 +11,8 @@ fi
 echo "Oletko aivan varma, että haluat tuhota KAIKKI levyn pve/vm-$NEWID-disk-1 sisällön? [sure]"
 read varmistus
 if [ "$varmistus" == "sure" ]; then
+ qm stop $NEWID -timeout 10
+ ct --files-dir=/etc/ceph < ignition.yml > ignition.json
  rbd feature disable pve/vm-$NEWID-disk-1 object-map fast-diff deep-flatten #features unsupported by the kernel
  RBD_DEV=$(rbd map pve/vm-$NEWID-disk-1)
  ./init/bin/coreos-install -d $RBD_DEV -i ignition.json -C stable

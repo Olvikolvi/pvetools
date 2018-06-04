@@ -21,7 +21,7 @@ networkd:
 
         [Network]
         DNS=8.8.4.4
-        Address=5.83.57.242/24
+        Address=5.83.57.241/24
         Gateway=5.83.57.1
 
     - name: 00-eth1.network
@@ -30,19 +30,20 @@ networkd:
         Name=eth1
 
         [Network]
-        Address=10.1.10.102/24
+        Address=10.1.10.101/24
 
 etcd:
   # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
   # specify the initial size of your cluster with ?size=X
 #  discovery: https://discovery.etcd.io/9834f49ac893f406173aef131a7e0cba
-  name:                        my-etcd-2
+  name:                        my-etcd-1
   advertise_client_urls:       http://0.0.0.0:2379
-  initial_advertise_peer_urls: http://10.1.10.102:2380
+  initial_advertise_peer_urls: http://10.1.10.101:2380
   listen_client_urls:          http://0.0.0.0:2379
   listen_peer_urls:            http://0.0.0.0:2380
-  initial_cluster:             my-etcd-1=http://10.1.10.101:2380,my-etcd-2=http://10.1.10.102:2380,my-etcd-3=http://10.1.10.103:2380
-  initial_cluster_token:       9834f49ac893f406173aef131a7e0cba
+  initial_cluster:             my-etcd-1=http://10.1.10.101:2380,my-etcd-2=http://10.1.10.102:2380,my-etcd-3=http://10.1.10.103:2380,my-etcd-4=http://10.1.10.104:2380
+  initial_cluster_token:       9834f49ac893f406173aef131a7e0cba  #joku uus
+  initial_cluster_token:       9fc4aa3a7169ae270c639c422439a71c
 #  initial_cluster_state:       new
 #uusi valitaan silloin kun quotaa ei ole, eli kun klusteri luodaan..
   initial_cluster_state:       existing
@@ -61,7 +62,7 @@ storage:
       path:       "/etc/hostname"
       mode:       0644
       contents:
-        inline:   coreos-2
+        inline:   coreos-1
 
     - path:       /etc/ceph/ceph.conf
       filesystem: "root"
@@ -177,19 +178,20 @@ storage:
 
 systemd:
   units:
-    - name: docker-tls-tcp.socket
+    - name: docker.service
       enable: true
-      contents: |
-        [Unit]
-        Description=Docker Secured Socket for the API
 
-        [Socket]
-        ListenStream=2376
-        BindIPv6Only=both
-        Service=docker.service
-
-        [Install]
-        WantedBy=sockets.target
+#    - name: docker-tls-tcp.socket
+#      enable: true
+#      contents: |
+#        [Unit]
+#        Description=Docker Secured Socket for the API
+#        [Socket]
+#        ListenStream=2376
+#        BindIPv6Only=both
+#        Service=docker.service
+#        [Install]
+#        WantedBy=sockets.target
 
     # install docker-compose
     - name: install-docker-compose.service
@@ -200,13 +202,15 @@ systemd:
         ConditionPathExists=!/opt/bin/docker-compose
         After=network-online.target
         Requires=network-online.target
+        After=docker.service
+        Requires=docker.service
 
         [Service]
         Type=oneshot
         RemainAfterExit=yes
-        ExecStart=/usr/bin/mkdir -p /opt/bin/
+        ExecStartPre=/usr/bin/mkdir -p /opt/bin/
         ExecStart=/usr/bin/curl -o /opt/bin/docker-compose -sL "https://github.com/docker/compose/releases/download/1.9.0/docker-compose-linux-x86_64"
-        ExecStart=/usr/bin/chmod +x /opt/bin/docker-compose
+        ExecStartPost=/usr/bin/chmod +x /opt/bin/docker-compose
 
 #EI TARVITA
 #    - name: install-rexray.service
@@ -230,12 +234,14 @@ systemd:
         Description=Install docker-plugin
         After=network-online.target
         Requires=network-online.target
+        After=docker.service
+        Requires=docker.service
 
         [Service]
         Type=oneshot
         RemainAfterExit=yes
         ExecStart=/usr/bin/docker plugin install rexray/rbd:latest RBD_DEFAULTPOOL="docker" RBD_CEPHARGS="--id admin" --grant-all-permissions
-        ExecStart=/usr/bin/docker plugin enable rexray/rbd:latest
+        ExecStartPost=/usr/bin/docker plugin enable rexray/rbd:latest
 
 docker:
   flags:
