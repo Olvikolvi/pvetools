@@ -14,8 +14,9 @@ read varmistus
 if [ "$varmistus" == "sure" ]; then
  qm stop $NEWID -timeout 10
  ./ct --files-dir=/etc/ceph < ignition.yml > ignition.json
- rbd feature disable pve/vm-$NEWID-disk-1 object-map fast-diff deep-flatten #features unsupported by the kernel
+ rbd feature disable pve/vm-$NEWID-disk-1 object-map fast-diff deep-flatten || true  #features unsupported by the kernel
  RBD_DEV=$(rbd map pve/vm-$NEWID-disk-1)
+ git --work-tree=init/ pull
  ./init/bin/coreos-install -d $RBD_DEV -i ignition.json -C stable
  rbd unmap $RBD_DEV
  echo "Now starting $NEWID"
