@@ -21,7 +21,7 @@ networkd:
 
         [Network]
         DNS=8.8.4.4
-        Address=5.83.57.241/24
+        Address=5.83.57.242/24
         Gateway=5.83.57.1
 
     - name: 00-eth1.network
@@ -30,15 +30,15 @@ networkd:
         Name=eth1
 
         [Network]
-        Address=10.1.10.101/24
+        Address=10.1.10.102/24
 
 etcd:
   # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
   # specify the initial size of your cluster with ?size=X
 #  discovery: https://discovery.etcd.io/9834f49ac893f406173aef131a7e0cba
-  name:                        my-etcd-1
+  name:                        my-etcd-2
   advertise_client_urls:       http://0.0.0.0:2379
-  initial_advertise_peer_urls: http://10.1.10.101:2380
+  initial_advertise_peer_urls: http://10.1.10.102:2380
   listen_client_urls:          http://0.0.0.0:2379
   listen_peer_urls:            http://0.0.0.0:2380
   initial_cluster:             my-etcd-1=http://10.1.10.101:2380,my-etcd-2=http://10.1.10.102:2380,my-etcd-3=http://10.1.10.103:2380,my-etcd-4=http://10.1.10.104:2380
@@ -62,7 +62,7 @@ storage:
       path:       "/etc/hostname"
       mode:       0644
       contents:
-        inline:   coreos-1
+        inline:   coreos-2
 
     - path:       /etc/ceph/ceph.conf
       filesystem: "root"
