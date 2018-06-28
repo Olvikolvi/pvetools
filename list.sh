@@ -1,5 +1,8 @@
 #!/bin/bash
-DSTPATH="ftp/ceph/"
+DSTPATH=$1
+if [ -z "$DSTPATH" ]; then
+  DSTPATH="ftp/ceph/"
+fi
 HOST="doopbu01.doop.fi"
 USER="doop01"
 PASS="TigvaucDedic"

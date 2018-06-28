@@ -4,5 +4,3 @@ for vm in $vms
 do
  ./snapANDback.sh $vm
 done
-
-
