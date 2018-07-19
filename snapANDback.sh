@@ -1,4 +1,4 @@
-	#!/bin/bash
+#!/bin/bash
 set -e
 POOL='pve'
 VMID=$1
@@ -9,6 +9,23 @@ TMP="/mnt/tmpdisk/"
 if [ ! -d $TMP ]; then
   echo "Target folder $TMP does not exists"
   exit
+fi
+
+IFS=" " read tmpsize tmpmount <<< $(df --output="avail,target" $TMP |tail -n1)
+if [ "$tmpmount" == '/' ]; then
+  read -p "$TMP is mounted to root fs. Are you sure you want to continue? [N/y]: " jatko
+  if [ "$jatko" != "y" ]; then
+    echo "ok, wont continue";
+    exit
+  fi
+fi
+
+if [ "$tmpsize" -lt "20000000" ]; then
+  read -p "$TMP is too small ($tmpsize bytes). Are you sure you want to continue? [N/y]: " jatko
+  if [ "$jatko" != "y" ]; then
+    echo "ok, wont continue";
+    exit
+  fi
 fi
 
 if [ -z $VMID ]; then
