@@ -21,11 +21,7 @@ networkd:
 
         [Network]
         DNS=8.8.4.4
-<<<<<<< HEAD
         Address=5.83.57.242/24
-=======
-        Address=5.83.57.245/24
->>>>>>> 396c2121a199d2d0c806cfa4f5fe8557c6b0ccd4
         Gateway=5.83.57.1
 
     - name: 00-eth1.network
@@ -34,25 +30,15 @@ networkd:
         Name=eth1
 
         [Network]
-<<<<<<< HEAD
         Address=10.1.10.102/24
-=======
-        Address=10.1.10.103/24
->>>>>>> 396c2121a199d2d0c806cfa4f5fe8557c6b0ccd4
 
 etcd:
   # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
   # specify the initial size of your cluster with ?size=X
 #  discovery: https://discovery.etcd.io/9834f49ac893f406173aef131a7e0cba
-<<<<<<< HEAD
   name:                        my-etcd-2
   advertise_client_urls:       http://0.0.0.0:2379
   initial_advertise_peer_urls: http://10.1.10.102:2380
-=======
-  name:                        my-etcd-3
-  advertise_client_urls:       http://0.0.0.0:2379
-  initial_advertise_peer_urls: http://10.1.10.103:2380
->>>>>>> 396c2121a199d2d0c806cfa4f5fe8557c6b0ccd4
   listen_client_urls:          http://0.0.0.0:2379
   listen_peer_urls:            http://0.0.0.0:2380
   initial_cluster:             my-etcd-1=http://10.1.10.101:2380,my-etcd-2=http://10.1.10.102:2380,my-etcd-3=http://10.1.10.103:2380,my-etcd-4=http://10.1.10.104:2380
@@ -76,11 +62,7 @@ storage:
       path:       "/etc/hostname"
       mode:       0644
       contents:
-<<<<<<< HEAD
         inline:   coreos-2
-=======
-        inline:   coreos-3
->>>>>>> 396c2121a199d2d0c806cfa4f5fe8557c6b0ccd4
 
     - path:       /etc/ceph/ceph.conf
       filesystem: "root"
@@ -271,6 +253,14 @@ systemd:
         RemainAfterExit=yes
         ExecStart=/usr/bin/docker plugin install rexray/rbd:latest RBD_DEFAULTPOOL="docker" RBD_CEPHARGS="--id admin" --grant-all-permissions
         ExecStartPost=/usr/bin/docker plugin enable rexray/rbd:latest
+
+update:
+  group: "stable"
+
+locksmith:
+  reboot_strategy: off
+  window_start: Mon 23:00
+  window_length: 1h
 
 docker:
   flags:
