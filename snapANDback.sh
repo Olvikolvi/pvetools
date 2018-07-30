@@ -37,12 +37,12 @@ if [ ! -f /etc/pve/qemu-server/$VMID.conf ]; then
   exit
 fi
 
-DISKS=`rbd -p pve ls|grep "vm-$VMID-disk"`
+DISKS=`rbd -p $POOL ls|grep "vm-$VMID-disk"`
 LATEST=''
 for DISK in $DISKS
 do
    # excl on vain kun virtuaalikone on käynnissä?
-   LAST=`rbd -p pve ls -l | grep $DISK | egrep '@VM[0-9]{14}|excl' | tail -n 1 | awk '{print $1}'`
+   LAST=`rbd -p $POOL ls -l | grep $DISK | egrep '@VM[0-9]{14}|excl' | tail -n 1 | awk '{print $1}'`
    echo "Found disk $LAST"
    LATEST+=" $LAST"
 done
