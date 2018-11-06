@@ -4,7 +4,7 @@ vms=`grep 'ceph:' /etc/pve/nodes/*/qemu-server/* | egrep -v 'backup=0|unused' | 
 for vm in $vms
 do
  STATUS=$(qm status $vm)
- if [ "$STATUS" == "status: running"]; then
+ if [ "$STATUS" == "status: running" ]; then
     ./snapANDback.sh $vm
  else
   echo "VM $vm $STATUS"

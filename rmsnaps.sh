@@ -13,4 +13,3 @@ fi
 qm delsnapshot $ID $a
 
 done
-

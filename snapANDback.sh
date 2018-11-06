@@ -54,7 +54,10 @@ for TODISK in $LATEST
 do
   TOSNAP=`sed 's/.*@//' <<< $TODISK`
   DISK=`sed 's/@.*//' <<< $TODISK`
-  if [ "$TOSNAP" == "$DISK" ]; then
+
+  LAST_INIT=`./list.sh | grep "${DISK}_INIT_" | egrep -o 'INIT_VM([0-9]{14})' | sed 's/[^0-9]*//g' | tail -n1`
+
+  if [ "$TOSNAP" == "$DISK" ] || [ $DATE -gt $(($LAST_INIT+100000000)) ]; then
     FILENAME=$TMP$DISK"_INIT_"$SNAPNAME".rbd.iso.gz"
     ionice rbd -p $POOL export "$DISK" - | nice gzip -1 > $FILENAME
   else
